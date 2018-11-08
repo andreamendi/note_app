@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+
+{% block body %} 
+
+
+    <div class="jumbotron">
+        <h1 class="display-4">{{ note.title}}</h1>
+                <p class="lead">{{ note.date}}&nbsp;&nbsp;|&nbsp;&nbsp; {{ note.author}}</p>
+                <hr class="my-4">
+                <p>{{ note.description}}</p> 
+            </div>
+    </ul>
+    
+
+{% endblock %}
