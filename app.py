@@ -1,76 +1,138 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
-# from data import Notes
 
+app = Flask(__name__)
 
-
-app = Flask(__name__) 
-# notes = Notes()
-
-# Config SQL
-
+#Config MySQL
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'Mars24601@'
 app.config['MYSQL_DB'] = 'note_app'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-
-
 #Init MySQL
-mysql  = MySQL(app)
-
-
+mysql = MySQL(app)
 
 @app.route('/')
-def index():  
-    return render_template("home.html")
+def index():
+  return render_template('home.html')
 
 @app.route('/notes')
 def my_notes():
-    return render_template("notes.html")
+  cur = mysql.connection.cursor()
 
-# El debajo se comento ya que era prueba.
-# @app.route('/note/<string:id>/')
-# def note(id):
-#     for note in notes:
-#         if note['id'] == int(id):
-#             data = note
-#             break
-#     return render_template("note.html", note = data)
+  result = cur.execute("SELECT * FROM notes")
 
+  notes = cur.fetchall()
 
+  cur.close()
+  if result > 0 :
+    return render_template('notes.html', notes = notes)
+  else: 
+    return 'No data'
+
+  
+
+@app.route('/note/<string:id>/')
+def note(id):
+  cur = mysql.connection.cursor()
+
+  cur.execute("SELECT * FROM notes WHERE id = %s",(id))
+
+  note = cur.fetchone()
+
+  cur.close()
+  return render_template('note.html', note = note)
 
 class NoteForm(Form):
-    title = StringField('Title', [validators.Length(min=1, max=45)])
-    description = TextAreaField('Description', [validators.Length(min=5)])
+  title = StringField('Title', [validators.Length(min=1, max=45)])
+  description = TextAreaField('Description', [validators.Length(min=5)])
 
-@app.route('/add-note', methods=['GET','POST'])
+@app.route('/add-note', methods=['GET', 'POST'])
 def add_note():
-    form = NoteForm(request.form)
+  form = NoteForm(request.form)
+  print(request.method)
+
+  if request.method == 'POST' and form.validate():
+    title = form.title.data
+    description = form.description.data
+
+    #Create cursor
+    cur = mysql.connection.cursor()
+
+    #Execute
+    cur.execute("INSERT INTO notes(title, description) VALUES (%s,%s)", 
+    (title, description))
+
+    mysql.connection.commit()
+
+    cur.close()
+    flash('Agregaste un post', 'success')
+
+    return redirect(url_for('add_note'))
+
+  return render_template('add_note.html', form = form)
+
+
+@app.route('/edit-note/<string:id>/',methods=['GET', 'POST'])
+def edit_note(id):
+  cur = mysql.connection.cursor()
+
+  cur.execute("SELECT * FROM notes WHERE id = %s",(id))
+
+  note = cur.fetchone()
+
+  cur.close()
+  form = NoteForm(request.form)
+  form.title.data = note['title']
+  form.description.data = note['description']
+
+  if request.method == 'POST' and form.validate():
+    print(request.method)
+    title = request.form['title']
+    description = request.form['description']
+
+    #Create cursor
+    cur = mysql.connection.cursor()
+
+    #Execute
+    cur.execute("UPDATE notes SET title = %s, description = %s WHERE id = %s", (title, description,id))
     
-    if request.method == 'POST' and form.validate():
-        title = form.title.data
-        description = form.description.data
+    # Commit to DB
+    mysql.connection.commit()
 
-        #Create a Cur -> o sea una conexion con la DB
-        cur = mysql.connection.cursor()
+    # Close connection 
+    cur.close()
 
-        #Execute
-        cur.execute('INSERT INTO notes(title, description) VALUES (%s,%s)', (title,description))
+    return redirect(url_for('my_notes'))
 
-        mysql.connection.commit()
-        cur.close()
-
-        return redirect(url_for('add_note'))
-
-    return render_template('add_note.html', form=form)
+  return render_template('edit_note.html', form = form)
 
 
-# El "if" debe de ir al final sino no va a correr
+@app.route('/delete-note/<string:id>', methods = ['POST'])
+def delete_note(id):
+  print(request.method)
+
+  #Create cursor
+  cur = mysql.connection.cursor()
+
+  #Execute
+  cur.execute ("DELETE FROM notes WHERE id = %s", [id])
+    
+  # Commit to DB
+  mysql.connection.commit()
+
+  # Close connection 
+  cur.close() 
+
+  
+
+  return redirect(url_for('my_notes'))
+
+
+
 
 if __name__ == '__main__':
-    app.run(debug= True)
-    #Debug = true, es para que se actualize solo, lo único que hay que hacer es refrescar el navegador.
-    # Sí de desea establecer un puerto en particular es -> app.run(port = 4444)
+  app.secret_key = 'secret12345'
+  app.run(debug=True)

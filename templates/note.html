@@ -1,15 +1,15 @@
-{% extends 'layout.html' %}
+{%extends 'layout.html'%}
 
-{% block body %} 
+{% block body %}
+<div class="row">
+    <div class="jumbotron" style="width: 18rem;">
+        <div class="card-body">
+            <h1 class="display-12">{{ note.title}}</h1>
+            <hr class="my-4">
 
-
-    <div class="jumbotron">
-        <h1 class="display-4">{{ note.title}}</h1>
-                <p class="lead">{{ note.date}}&nbsp;&nbsp;|&nbsp;&nbsp; {{ note.author}}</p>
-                <hr class="my-4">
-                <p>{{ note.description}}</p> 
-            </div>
-    </ul>
-    
-
+            <p class="card-text">{{ note.description }}</p>
+            <p>Date: {{ note.created_at }}</p>
+        </div>
+    </div>
+</div>
 {% endblock %}

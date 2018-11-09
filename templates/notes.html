@@ -1,19 +1,26 @@
-{% extends 'layout.html' %}
+{%extends 'layout.html'%} 
 
-{% block body %} 
-    <h1>My notes</h1>
-    
-    <ul>
-        {% for note in notes  %}
-            <div class="jumbotron">
-                <h1 class="display-4">{{ note.title}}</h1>
-                <p class="lead">{{ note.date}}&nbsp;&nbsp;|&nbsp;&nbsp; {{ note.author}}</p>
-                <hr class="my-4">
-                <!-- <p>{{ note.description}}</p> -->
-                <a href="/note/{{note.id}}"><button type="button" class="btn btn-dark">Description</button></a> 
-            </div>
-        {% endfor%}
-    </ul>
-    
+{% block body %}
+<h1>This are my notes</h1>
 
+
+
+<div class="row">
+    {% for note in notes %}
+    
+        <div class="jumbotron" style="margin: 10px">
+            <h1 class="display-4">{{ note.title}}</h1>
+            <p class="lead">Date: {{ note.created_at }}&nbsp;&nbsp;
+            <hr class="my-4">
+            <a href="/note/{{note.id}}" ><button type="button" class="btn btn-primary">Description</button></a>
+            <a href="/edit-note/{{note.id}}"><button type="button" class="btn btn-info">Edit</button></a>
+            <form action="{{url_for('delete_note', id=note.id)}}" method="POST">
+                <!-- <input type="hidden" name='_method' value="delete"> -->
+                <button type="button summit" value="Delete" class="btn btn-outline-danger">Delete</button>
+            </form>
+        </div>
+    {% endfor %} 
+ 
 {% endblock %}
+
+</div>
