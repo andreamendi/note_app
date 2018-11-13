@@ -21,3 +21,7 @@ CREATE TABLE notes(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+
+SELECT * FROM notes;
+SELECT * FROM users;
