@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_mysqldb import MySQL
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators
-from wtforms.fields.html5 import EmailField
 from passlib.hash import sha256_crypt
+from flask_wtf import CSRFProtect
+import forms
+
 app = Flask(__name__)
 
 
@@ -15,6 +16,7 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 #Init MySQL
 mysql = MySQL(app)
+csrf = CSRFProtect(app)
 
 @app.route('/')
 def index():
@@ -49,25 +51,10 @@ def note(id):
 
 
 
-class NoteForm(Form):
-  title = StringField('Title', [validators.Length(min=1, max=45)])
-  description = TextAreaField('Description', [validators.Length(min=5)])
-
-
-
-class RegisterForm(Form):
-  name = StringField('Name', [validators.Length(min = 1, max = 45)])
-  username = StringField('Username',[validators.Length(min = 5, max = 45)])
-  email = EmailField ('Email',[validators.Email('Ingrese un email valido'), validators.Required('Este es un campo requerido')])
-  password = PasswordField('Password',[validators.DataRequired(), validators.EqualTo('confirm', message = 'Password do not match')])
-  confirm = PasswordField('Confirm Password')
-
-
-
 
 @app.route('/add-note', methods=['GET', 'POST'])
 def add_note():
-  form = NoteForm(request.form)
+  form = forms.NoteForm(request.form)
   print(request.method)
 
   if request.method == 'POST' and form.validate():
@@ -98,7 +85,7 @@ def edit_note(id):
 
   cur.close()
 
-  form = NoteForm(request.form)
+  form = forms.NoteForm(request.form)
   form.title.data = note['title']
   form.description.data = note['description']
 
@@ -139,7 +126,7 @@ def delete_note(id):
 
 @app.route('/register', methods=['GET','POST'])
 def register():
-  form = RegisterForm(request.form)
+  form = forms.RegisterForm(request.form)
   print(request.method)
 
   if request.method == 'POST' and form.validate():
