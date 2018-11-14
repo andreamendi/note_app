@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 from flask_wtf import CSRFProtect
@@ -10,7 +10,7 @@ app = Flask(__name__)
 #Config MySQL
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_PASSWORD'] = 'Mars24601@'
 app.config['MYSQL_DB'] = 'note_app'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
@@ -20,7 +20,15 @@ csrf = CSRFProtect(app)
 
 @app.route('/')
 def index():
-  return render_template('home.html')
+  if 'logged_in' in session:
+    message = "{}'s notes".format(session['username'])
+  else:
+    message = 'My Notes'
+
+  return render_template('home.html', message = message)
+
+
+
 
 @app.route('/notes')
 def my_notes():
@@ -38,6 +46,7 @@ def my_notes():
 
   
 
+
 @app.route('/note/<string:id>/')
 def note(id):
   cur = mysql.connection.cursor()
@@ -48,6 +57,7 @@ def note(id):
 
   cur.close()
   return render_template('note.html', note = note)
+
 
 
 
@@ -73,6 +83,7 @@ def add_note():
     return redirect(url_for('add_note'))
 
   return render_template('add_note.html', form = form)
+
 
 
 
@@ -108,6 +119,7 @@ def edit_note(id):
 
 
 
+
 @app.route('/delete-note/<string:id>', methods = ['POST'])
 def delete_note(id):
   print(request.method)
@@ -120,6 +132,7 @@ def delete_note(id):
   # Close connection 
   cur.close() 
   return redirect(url_for('my_notes'))
+
 
 
 
@@ -150,12 +163,46 @@ def register():
 
 
 
+
 @app.route('/log-in', methods=['GET', 'POST'])
 def log_in():
-  form = forms.RegisterForm(request.form)
+  form = forms.LoginForm(request.form)
   print(request.method)
 
+  if request.method == 'POST' and form.validate():
+    username_candidate = form.username.data
+    print(username_candidate)
+    password_candidate = form.password.data
+
+    #Vamos a conectarnos con SQL
+    cur = mysql.connection.cursor()
+
+    cur.execute("SELECT password FROM users WHERE username = %s",(username_candidate))
+    password_sql = cur['password']
+    
+    password_verify =  sha256_crypt.verify(password_candidate, password_sql)
+    if password_verify:
+        session['logged_in'] = True
+        session['username'] = username
+        cur.close()
+        return redirect(url_for('index'))
+    else:
+      flash("Datos erroneos.")
+      
   return render_template('log_in.html', form = form) 
+
+
+
+
+@app.route('/logout')
+def logout ():
+  session.clear()
+  flash("You're now logged out", 'danger')
+  return redirect(url_for('log_in'))
+
+
+
+
 
 
 
