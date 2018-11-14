@@ -149,6 +149,17 @@ def register():
 
 
 
+
+@app.route('/log-in', methods=['GET', 'POST'])
+def log_in():
+  form = forms.RegisterForm(request.form)
+  print(request.method)
+
+  return render_template('log_in.html', form = form) 
+
+
+
+
 if __name__ == '__main__':
   app.secret_key = 'secret12345'
   app.run(debug=True)
