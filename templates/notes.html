@@ -18,7 +18,7 @@
             <a href="/note/{{note.id}}" ><button type="button" class="btn btn-primary">Description</button></a>
             <a href="/edit-note/{{note.id}}"><button type="button" class="btn btn-info">Edit</button></a>
             <form action="{{url_for('delete_note', id=note.id)}}" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="csrf "_token" value="{{ csrf_token() }}">
                 <!-- <input type="hidden" name='_method' value="delete"> -->
                 <button type="button summit" value="Delete" class="btn btn-outline-danger">Delete</button>
             </form>
