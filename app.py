@@ -3,6 +3,7 @@ from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 from flask_wtf import CSRFProtect
 import forms
+from _mysql_exceptions import OperationalError
 
 app = Flask(__name__)
 
@@ -22,8 +23,9 @@ csrf = CSRFProtect(app)
 def index():
   if 'logged_in' in session:
     message = "{}'s notes".format(session['username'])
+   
   else:
-    message = 'My Notes'
+    message = 'Hello user!'
 
   return render_template('home.html', message = message)
 
@@ -34,7 +36,7 @@ def index():
 def my_notes():
   cur = mysql.connection.cursor()
 
-  result = cur.execute("SELECT * FROM notes")
+  result = cur.execute("SELECT * FROM notes WHERE id_user = %s", [session['id_user']])
 
   notes = cur.fetchall()
 
@@ -42,7 +44,9 @@ def my_notes():
   if result > 0 :
     return render_template('notes.html', notes = notes)
   else: 
-    return 'No data'
+    mensaje = 'No tienes notas'
+    return render_template('notes.html', mensaje = mensaje)
+    
 
   
 
@@ -75,14 +79,15 @@ def add_note():
     cur = mysql.connection.cursor()
 
     #Execute
-    cur.execute("INSERT INTO notes(title, description) VALUES (%s,%s)", 
-    (title, description))
+    cur.execute("INSERT INTO notes(title, description, id_user) VALUES (%s,%s,%s)", 
+    (title, description,session['id_user']))
     mysql.connection.commit()
     cur.close()
     flash('Agregaste un post', 'success')
     return redirect(url_for('add_note'))
 
   return render_template('add_note.html', form = form)
+
 
 
 
@@ -157,7 +162,7 @@ def register():
     mysql.connection.commit()
     cur.close()
     flash('Muy bien, ya estas registrad@', 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('log_in'))
   return render_template('register.html', form = form) 
 
 
@@ -168,26 +173,36 @@ def register():
 def log_in():
   form = forms.LoginForm(request.form)
   print(request.method)
-
   if request.method == 'POST' and form.validate():
     username_candidate = form.username.data
+    
     print(username_candidate)
+    print('Hola')
     password_candidate = form.password.data
 
     #Vamos a conectarnos con SQL
     cur = mysql.connection.cursor()
+    try:
+      cur.execute("SELECT * FROM users WHERE username = %s",[username_candidate])
+      user = cur.fetchone()
+      print(user['password'])
+      
+      
+      password_verify =  sha256_crypt.verify(password_candidate, user['password'])
+      print(password_verify)
+      if password_verify:
+          session['logged_in'] = True
+          session['username'] = user['username']
+          session['id_user'] = user['id']
+          cur.close()
+          return redirect(url_for('index'))
+      else:
+        flash("Password or Username incorrect", 'danger')
+    except OperationalError:
+      flash("No hay contexión a la DataBase", 'danger')
+    except:
+      flash("Password or Username incorrect", 'danger')
 
-    cur.execute("SELECT password FROM users WHERE username = %s",(username_candidate))
-    password_sql = cur['password']
-    
-    password_verify =  sha256_crypt.verify(password_candidate, password_sql)
-    if password_verify:
-        session['logged_in'] = True
-        session['username'] = username
-        cur.close()
-        return redirect(url_for('index'))
-    else:
-      flash("Datos erroneos.")
       
   return render_template('log_in.html', form = form) 
 
@@ -197,7 +212,7 @@ def log_in():
 @app.route('/logout')
 def logout ():
   session.clear()
-  flash("You're now logged out", 'danger')
+  flash("You're now logged out", 'success')
   return redirect(url_for('log_in'))
 
 

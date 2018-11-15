@@ -1,5 +1,6 @@
 CREATE DATABASE note_app;
-DROP DATABASE note_app;
+
+#DROP DATABASE note_app;
 
 USE note_app;
 
@@ -18,8 +19,11 @@ CREATE TABLE notes(
 	id INT NOT NULL auto_increment,
 	title VARCHAR (45),
     description TEXT,
+    id_user int NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    CONSTRAINT FK_UsersNotes FOREIGN KEY (id_user)
+    	REFERENCES users(id)
 );
 
 
