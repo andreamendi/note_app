@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 from flask_wtf import CSRFProtect
+from config import DevelopmentConfig
 import forms
 from _mysql_exceptions import OperationalError
 
@@ -9,17 +10,17 @@ app = Flask(__name__)
 
 
 #Config MySQL
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = '@'
-app.config['MYSQL_DB'] = 'note_app'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+# app.config['MYSQL_HOST'] = 'localhost'
+# app.config['MYSQL_USER'] = 'root'
+# app.config['MYSQL_PASSWORD'] = ''
+# app.config['MYSQL_DB'] = 'note_app'
+# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+app.config.from_object(DevelopmentConfig)
+
 
 #Init MySQL
 mysql = MySQL(app)
-csrf = CSRFProtect(app)
-
-
 
 
 @app.errorhandler(404)
@@ -313,5 +314,5 @@ def logout ():
 
 
 if __name__ == '__main__':
-  app.secret_key = 'secret12345'
-  app.run(debug=True)
+  csrf = CSRFProtect(app)
+  app.run()
