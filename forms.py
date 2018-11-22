@@ -17,3 +17,9 @@ class RegisterForm(Form):
 class LoginForm(Form):
     username = StringField('Username',[validators.Length(min = 5),validators.DataRequired()])
     password = PasswordField('Password',[validators.DataRequired()])
+
+
+class EditForm(Form):
+  name = StringField('Name', [validators.Length(min = 1, max = 45)])
+  email = EmailField ('Email',[validators.Email('Ingrese un email valido')])
+  password = PasswordField('Password')
